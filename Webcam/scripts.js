@@ -25,43 +25,72 @@ function paintToCanvas() {
 
   return setInterval(() => {
     ctx.drawImage(video, 0, 0, width, height);
-    let pixcels = ctx.getImageData(0,0, width, height);
-    pixcels = redeffect(pixcels);
-    ctx.globalAlpha = 0.8;
-    ctx.putImageData(pixcels,0,0);
+    let pixels = ctx.getImageData(0,0, width, height);
+    pixels = rgbSplit(pixels);
+    // pixcels = redEffect(pixcels);
+    // ctx.globalAlpha = 0.8;
+    ctx.putImageData(pixels,0,0);
   }, 16);
 
 }
 
-function takePhoto(){
+function takePhoto() {
   snap.currentTime = 0;
   snap.play();
 
-  const data = canvas.toDataURL('image/jpg');
+  const data = canvas.toDataURL('image/jpeg');
   const link = document.createElement('a');
   link.href = data;
   link.setAttribute('download', 'handsome');
-  strip.insertBefore(link, strip.firstChild);
+  link.innerHTML = `<img src="${data}" alt="Handsome Man" />`;
+  strip.insertBefore(link, strip.firsChild);
 }
 
-function redeffect(pixcels) {
-  for(let i = 0; i < pixcels.data.length; i+=4){
-    pixcels.data[i + 0] = pixcels.data[i + 0] + 100;
-    pixcels.data[i + 1] = pixcels.data[i + 1] - 50;
-    pixcels.data[i + 2] = pixcels.data[i + 2] * 0.5;
+function redEffect(pixels) {
+  for(let i = 0; i < pixels.data.length; i+=4){
+    pixels.data[i + 0] = pixels.data[i + 0] + 100;
+    pixels.data[i + 1] = pixels.data[i + 1] - 50;
+    pixels.data[i + 2] = pixels.data[i + 2] * 0.5;
   }
   return pixcels;
 }
 
-function rgbsplite(pixcels) {
-  for(let i = 0; i < pixcels.data.length; i+=4){
-    pixcels.data[i - 150] = pixcels.data[i + 0];
-    pixcels.data[i + 100] = pixcels.data[i + 1];
-    pixcels.data[i - 550] = pixcels.data[i + 2];
+function rgbSplit(pixels) {
+  for(let i = 0; i < pixels.data.length; i+=4){
+    pixels.data[i - 150] = pixels.data[i + 0];
+    pixels.data[i + 100] = pixels.data[i + 1];
+    pixels.data[i - 550] = pixels.data[i + 2];
   }
-  return pixcels;
+  return pixels;
+}
+
+function greenScreen(pixels) {
+  const levels = {};
+
+  document.querySelectorAll('.rgb input').forEach((input) => {
+    levels[input.name] = input.value;
+  });
+
+  for (i = 0; i < pixels.data.length; i = i + 4) {
+    red = pixels.data[i + 0];
+    green = pixels.data[i + 1];
+    blue = pixels.data[i + 2];
+    alpha = pixels.data[i + 3];
+
+    if (red >= levels.rmin
+      && green >= levels.gmin
+      && blue >= levels.bmin
+      && red <= levels.rmax
+      && green <= levels.gmax
+      && blue <= levels.bmax) {
+      // take it out!
+      pixels.data[i + 3] = 0;
+    }
+  }
+
+  return pixels;
 }
 
 getVideo();
 
-video.addEventListener('canPlay', paintToCanvas);
+video.addEventListener('canplay', paintToCanvas);
